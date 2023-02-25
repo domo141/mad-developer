@@ -7,7 +7,7 @@
 #	    All rights reserved
 #
 # Created: Tue 17 Jan 2023 23:58:46 EET too
-# Last modified: Sat 18 Feb 2023 01:18:40 +0200 too
+# Last modified: Sun 26 Feb 2023 00:40:35 +0200 too
 
 # one may be able to give command line input that breaks this,
 # but if it is a footgun, it is their footgun...
@@ -73,7 +73,7 @@ $(GOAL):
 	@$(shlead)
 	test $$# -ge 3 || {
 		case $$0 in ./*) n=$$0 ;; *) n=$${0##*/} ;; esac
-		rest='[[user]@]{host} [command [args]]'
+		rest='[user@]{host} [command [args]]'
 		die "Usage: $(MAKE) $@ {name} {time}(s|m|h|d|w) $$rest" \
 		'' ": Hint; $(MAKE) $@ , 4h nemo@192.168.2.15 date; date" \
 		'' ': Then; ssh , date; date'
