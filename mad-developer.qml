@@ -223,7 +223,7 @@ ApplicationWindow {
                          function(result) {
                              usbip_text = result[0];  usbnw.text = result[1]
                              wlanip_text = result[2]; wlannw.text = result[3]
-                             updt.text = result[4] // ;console.log(result)
+                             wlan.text = result[4];   updt.text = result[5]
                          })
                 }
                 function run_exitsshconns() {

@@ -9,7 +9,7 @@
 #
 # Created: Mon 06 Jun 2022 23:28:40 EEST too (device-ip)
 # Next created: Sat 14 Jan 2023 16:57:01 +0200 too
-# Last modified: Sat 18 Feb 2023 01:19:51 +0200 too
+# Last modified: Sat 07 Oct 2023 13:19:32 +0300 too
 
 # SPDX-License-Identifier: BSD 2-Clause "Simplified" License
 
@@ -48,8 +48,15 @@ def usb_wlan_ipv4s():
     sd = s.fileno()
     usb_ip, usb_pl = _ip_pl(sd, b'rndis0')
     wlan_ip, wlan_pl = _ip_pl(sd, b'wlan0')
+    wlan_n = 'wlan0:'
+    if wlan_ip == '-':
+        wlan_ip, wlan_pl = _ip_pl(sd, b'tether')
+        if wlan_ip != '-':
+            wlan_n = 'tether:'
+            pass
+        pass
 
-    return (usb_ip, usb_pl, wlan_ip, wlan_pl,
+    return (usb_ip, usb_pl, wlan_ip, wlan_pl, wlan_n,
             f'updated: {datetime.now().strftime("%H:%M:%S")}')
 
 
