@@ -1,0 +1,77 @@
+
+`sl` is used as one way to create persistent ssh connection, optionally
+with aliased host name.
+
+In $HOME/.ssh/config something like these needs to be there:
+
+$--8<----8<----8<----8<----8<--
+...
+ControlMaster no
+ControlPath ~/.ssh/master-%r@%h:%p
+...
+#--8<----8<----8<----8<----8<--
+
+Those before any 'Host' lines (if any). Any valid ControlPath
+configuration should work. ControlMaster auto may too...
+
+In case of connection to sailfish device, I often execute
+
+$ ./sl , =192.168.2.15 1d date; date
+
+after that
+
+$ ./sl ,
+
+works. also ssh , -- scp ... , --  and so on -- works.
+
+( then e.g. make rcopy try DEV_SSH_ARGS=, ;: works
+  although I often export DEV_SSH_ARGS=, )
+
+I don't have either 'defaultuser' or 'nemo' as my login name,
+but I have added my loginname to /usr/share/mad-developer/loginnames
+in my (2) sailfish devices.
+
+One can use the format ./sl , =nemo@192.168.2.15 1d to connect.
+
+Some other time I connect via wlan, be it via 'wlan0' or 'tether'
+(tether is also wlan0 but has the ip when using device as hotspot)
+e.g.
+
+$ ./sl , =developer@172.28.172.1 1d
+
+creates connection when using default hostspot ip connection
+(Note to self: changeable in /etc/connman/main.conf).
+
+That is convenient as not the same host alias ',' works whichever
+way, or wherever the connection is created...
+
+... alternatively one could have executed
+
+$ ./sl developer@172.28.172.1 1d
+
+and then use e.g. ssh developer@172.28.172.1 for additional connections.
+
+The connection creation 'trick' here is the last executable line in `sl`:
+
+x_exec ssh -oControlPath=$z -M -oControlPersist=$time "$r" "$@"
+
+
+
+I also have another use for it (only 'sl' below as I have it in PATH);
+in my $HOME/.ssh/.config I have configured:
+
+$--8<----8<----8<----8<----8<--
+...
+Host .
+     HostName remote.host.tld
+...
+#--8<----8<----8<----8<----8<--
+
+and now just
+
+$ sl . [1d]
+
+works to create and connect. If I forget (usually I do) to add that '1d'
+(for one day persistence) then sl will ask the time interactively.
+After connection is created and connection socket is there, `sl .`
+works pretty much like `ssh .`

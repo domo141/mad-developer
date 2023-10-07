@@ -7,7 +7,7 @@
 #	    All rights reserved
 #
 # Created: Tue 17 Jan 2023 23:58:46 EET too
-# Last modified: Sun 26 Feb 2023 00:40:35 +0200 too
+# Last modified: Sat 07 Oct 2023 13:01:44 +0300 too
 
 # one may be able to give command line input that breaks this,
 # but if it is a footgun, it is their footgun...
@@ -67,32 +67,6 @@ x_exec () { printf '+ %s\n' "$$*" >&2; exec "$$@"; }
 endef
 
 
-# create persistent ssh connection...
-$(eval $(call haveargs, sshp ))
-$(GOAL):
-	@$(shlead)
-	test $$# -ge 3 || {
-		case $$0 in ./*) n=$$0 ;; *) n=$${0##*/} ;; esac
-		rest='[user@]{host} [command [args]]'
-		die "Usage: $(MAKE) $@ {name} {time}(s|m|h|d|w) $$rest" \
-		'' ": Hint; $(MAKE) $@ , 4h nemo@192.168.2.15 date; date" \
-		'' ': Then; ssh , date; date'
-	}
-	echo "Checking/creating persistent connection lasting $$2"
-	z=`ssh -O check "$$1" 2>&1` &&
-	{ printf '%s\n%s\n' "$$z" "(ssh $$1 -O exit to exit)"; exit 0; } ||
-	case $$z in 'No ControlPath specified'*)
-		echo $$z
-		exit 1
-	esac
-	z=$${z%)*}; z=$${z#*\(}
-	test -e "$$z" && rm "$$z"
-	so=-oControlPath=$$z\ -M\ -oControlPersist=$$2
-	shift 2
-	echo ssh $$so "$$@" >&2
-#	#TERM=xterm \ no more needed, added ~/.terminfo/r/rxvt-unicode-256color
-	exec ssh $$so "$$@"
-
 $(eval $(call haveargs, ssh_hostargs ))
 $(GOAL):
 ifdef DEV_SSH_ARGS
@@ -103,7 +77,7 @@ else
 	$(info Set DEV_SSH_ARGS, either in environment, or as a make variable.)
 	$(info Note: Multiple ssh commands may be run, some with -t included.)
 	$(info (Often just hostname is enough, but one may need more.))
-	$(info Note to self: Remember: make sshp ...)
+	$(info Note to self: Remember: './sl-howIuse')
 	$(info )
 	$(error )
 endif
@@ -184,7 +158,7 @@ $(GOAL): ssh_hostargs
 
 
 # test run on device: append I={anything} to run via invoker
-$(eval $(call noargs, test ))
+$(eval $(call noargs, try ))
 $(GOAL): ssh_hostargs
 ifdef I
 	ssh -t $(DEV_SSH_ARGS) $(INVOPTS) sailfish-qml test-md
@@ -194,7 +168,7 @@ endif
 INVOPTS = invoker -vv --single-instance --type=silica-qt5
 
 
-# rpmbuild using podman / sailfishos-platform-sdk-aarch64 (or -sdk-armv7hl)
+# rpmbuild using podman / sailfishos-platform-sdk-aarch64 (or -armv7hl)
 $(eval $(call haveargs, rpmb ))
 $(GOAL):
 	@$(shlead)
