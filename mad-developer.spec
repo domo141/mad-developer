@@ -10,7 +10,7 @@
 Name:        mad-developer
 Summary:     Mad Developer
 Version:     2023
-Release:     1
+Release:     2
 License:     BSD-2-Clause
 Requires:    sailfishsilica-qt5 >= 0.10.9
 Requires:    pyotherside-qml-plugin-python3-qt5
