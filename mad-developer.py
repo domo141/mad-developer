@@ -9,7 +9,7 @@
 #
 # Created: Mon 06 Jun 2022 23:28:40 EEST too (device-ip)
 # Next created: Sat 14 Jan 2023 16:57:01 +0200 too
-# Last modified: Sat 07 Oct 2023 13:19:32 +0300 too
+# Last modified: Fri 02 Feb 2024 17:22:05 +0100 too
 
 # SPDX-License-Identifier: BSD 2-Clause "Simplified" License
 
@@ -29,7 +29,7 @@ if __name__ != '__main__':
 SIOCGIFADDR = 0x8915
 SIOCGIFNETMASK = 0x891B
 
-mm = { 255:8, 127:7, 63:6, 31:5, 15:4, 7:3, 3:2, 1:1, 0:0 }
+mm = { 255:8, 254:7, 252:6, 248:5, 240:4, 224:3, 192:2, 128:1, 0:0 }
 
 def _ip_pl(sd, name):
     try:
