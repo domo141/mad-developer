@@ -7,7 +7,7 @@
 #	    All rights reserved
 #
 # Created: Tue 17 Jan 2023 23:58:46 EET too
-# Last modified: Sat 07 Oct 2023 13:01:44 +0300 too
+# Last modified: Wed 25 Sep 2024 19:01:40 +0300 too
 
 # one may be able to give command line input that breaks this,
 # but if it is a footgun, it is their footgun...
@@ -177,14 +177,17 @@ $(GOAL):
 		;; *) due "'$$1' not '32' nor '64'"
 	esac
 	test -f mad-developer.spec
-	test -d $$arch || x mkdir $$arch
+	test -d build-rpms || mkdir build-rpms
 	script -ec 'set -x
+	build_name_fmt="%%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm"
+	exec \
 	./run-in-podman...sh sailfishos-platform-sdk-'"$$arch"':latest \
-		rpmbuild --build-in-place -D "%_rpmdir $$PWD" \
-		--target='"$$arch"' -bb mad-developer.spec
-	' $$arch/typescript-rpmbuild
-	set +f
-	exec ls -l $$arch/*
+		rpmbuild --build-in-place -D "%_rpmdir $$PWD/build-rpms" \
+			-D "%_buildhost buildhost" \
+			-D "%_build_name_fmt $$build_name_fmt" \
+			--target='"$$arch"' -bb mad-developer.spec
+	' build-rpms/typescript-rpmbuild-$$arch
+	x_exec ls -goF build-rpms
 
 $(eval $(call haveargs, rpmbuild)) # hidden from help, spece before ) missing
 $(GOAL): rpmb

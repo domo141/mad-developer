@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 14 Jan 2023 15:37:04 EET too
-# Last modified: Sun 19 Feb 2023 12:06:11 +0200 too
+# Last modified: Wed 25 Sep 2024 19:06:00 +0300 too
 
 # (Ø) public domain, like https://creativecommons.org/publicdomain/zero/1.0/
 
@@ -112,6 +112,10 @@ done
 
 # gcc -v gave more hints what to do
 ln -s $ldd /opt/cross/$bp/sys-root
+
+# this hostname is (no longer) used here;
+# (1) for reproducibility, and (2) some problems using it slowed build
+# but there may be other uses...
 
 # add a bit more information to hostname if it ends with '-latest'...
 hostname=`hostname`

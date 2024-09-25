@@ -7,6 +7,8 @@
 # extra ""s above is for rpmbuild not to nitpick -- can be left out...
 # -- replace (the 2) 'aarch64's w/ 'armv7hl's above for 32-bit build
 
+%define _wd %_rpmdir/wd1-%_target_platform
+
 Name:        mad-developer
 Summary:     Mad Developer
 Version:     2023
@@ -30,10 +32,9 @@ Show device IPv4 addresses, LD_PRELOADed sshd execution.
 %prep
 sed '$q; s/^/: /' "$0"
 #env | sort
-test $RPM_ARCH = arm && wd=armv7hl || wd=$RPM_ARCH
 #set -x; : : "$RPM_ARCH" : $wd : :; gcc -v
-gcc -v 2>&1 | grep -wqE $wd-meego-linux-gnu'(eabi)?' || {
-  echo "gcc does not compile for $wd-meego-linux-gnu[eabi]"; exit 1; } >&2
+gcc -v 2>&1 | grep -wqE %_target_cpu-meego-linux-gnu'(eabi)?' || { exec >&2
+  echo "gcc does not compile for %_target_cpu-meego-linux-gnu[eabi]"; exit 1; }
 #id
 #%setup -q -n %{name}-%{version}
 #%setup -q
@@ -41,20 +42,18 @@ gcc -v 2>&1 | grep -wqE $wd-meego-linux-gnu'(eabi)?' || {
 
 
 %build
-# if this is considered "polluting" have to fix (later)
-test $RPM_ARCH = arm && wd=armv7hl || wd=$RPM_ARCH
-test -d $wd || mkdir $wd
-cd $wd
+
+test -d %_wd || mkdir %_wd
+cd %_wd
 #strace -ff -oxx sh ../ldpreload-sshdivert.c
-sh ../ldpreload-sshdivert.c
-sh ../inetsshd.c
-sh ../exitsshconns.c
+sh ../../ldpreload-sshdivert.c
+sh ../../inetsshd.c
+sh ../../exitsshconns.c
 strip ldpreload-sshdivert.so inetsshd exitsshconns
 
 
 %install
 set -euf
-test $RPM_ARCH = arm && wd=armv7hl || wd=$RPM_ARCH
 # protection around "user error" with --buildroot=$PWD (tried before
 # --build-in-place) -- rpmbuild w/o sudo and container image default
 # uid/gid saved me from deleting all files from current directory).
@@ -71,8 +70,8 @@ mkdir $mdd/ $mdd/qml/ $mdd/etc/ \
       %{buildroot}%{_datadir}/icons/hicolor/86x86/ \
       %{buildroot}%{_datadir}/icons/hicolor/86x86/apps/
 install -m 644 %{name}.qml InfoPage.qml %{name}.py $mdd/qml/.
-install -m 755 $wd/inetsshd $wd/exitsshconns $mdd/.
-install -m 644 $wd/ldpreload-sshdivert.so $mdd/.
+install -m 755 %_wd/inetsshd %_wd/exitsshconns $mdd/.
+install -m 644 %_wd/ldpreload-sshdivert.so $mdd/.
 #nstall -m 755 %{name}.sh $mdd/.
 install -m 444 ssh_host_ed25519_key.pub $mdd/etc/.
 install -m 400 ssh_host_ed25519_key $mdd/etc/.
