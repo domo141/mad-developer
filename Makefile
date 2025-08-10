@@ -7,7 +7,7 @@
 #	    All rights reserved
 #
 # Created: Tue 17 Jan 2023 23:58:46 EET too
-# Last modified: Wed 25 Sep 2024 19:01:40 +0300 too
+# Last modified: Sun 10 Aug 2025 12:45:52 +0300 too
 
 # one may be able to give command line input that breaks this,
 # but if it is a footgun, it is their footgun...
@@ -69,15 +69,15 @@ endef
 
 $(eval $(call haveargs, ssh_hostargs ))
 $(GOAL):
-ifdef DEV_SSH_ARGS
-	@:
+ifdef D
+	@/bin/true
 else
 	@$(info )
-	$(info The Command '...' requires ssh access to the device.)
-	$(info Set DEV_SSH_ARGS, either in environment, or as a make variable.)
+	$(info The Command '$(MAKECMDGOALS)' requires ssh access to the device.)
+	$(info Set 'D=rhost', either in environment, or as a make variable.)
 	$(info Note: Multiple ssh commands may be run, some with -t included.)
 	$(info (Often just hostname is enough, but one may need more.))
-	$(info Note to self: Remember: './sl-howIuse')
+	$(info FYI: make ssht D= R=defaultuser@device may be useful ...)
 	$(info )
 	$(error )
 endif
@@ -89,10 +89,9 @@ TD = /usr/share/test-md
 $(eval $(call noargs, rdirs ))
 $(GOAL): ssh_hostargs
 	@$(shlead)
-	h='$(DEV_SSH_ARGS)'
-	x ssh -t $$h "test -d $(TD) || { set -x;
+	x ssh -t $D "test -d $(TD) || { set -x;
 	devel-su sh -c \"mkdir -p $(TD)/etc; chown \$$LOGNAME $(TD)\"; }"
-	x_exec ssh $$h "test -d $(TD)/qml ||
+	x_exec ssh $D "test -d $(TD)/qml ||
 	{ mkdir $(TD)/qml; ln -s mad-developer.qml $(TD)/qml/test-md.qml; }"
 
 
@@ -112,14 +111,14 @@ $(mkd):
 	mkdir $@
 
 $(mkd)/.%.up: $(mkd)/%
-	scp $< $(DEV_SSH_ARGS):$(TD)/
+	scp $< $D:$(TD)/
 	touch $@
 
 # order of the above and below matters, to not copy e.g. ./inetssh (if exists)
 
 $(mkd)/.%.up: % | $(mkd)
 	sed s:/mad-developer:/test-md: $< \
-	| ssh $(DEV_SSH_ARGS) 'cat >$(TD)/qml/$<'
+	| ssh $D 'cat >$(TD)/qml/$<'
 	touch $@
 
 
@@ -154,18 +153,38 @@ $(GOAL): $(mkd)/inetsshd $(mkd)/ldpreload-sshdivert.so $(mkd)/exitsshconns
 # devel-su rm -rf /usr/share/test-md/ over ssh connection
 $(eval $(call noargs, rrm ))
 $(GOAL): ssh_hostargs
-	ssh $(DEV_SSH_ARGS) 'set -x; devel-su rm -rf /usr/share/test-md'
+	ssh $D 'set -x; devel-su rm -rf /usr/share/test-md'
 
 
 # test run on device: append I={anything} to run via invoker
 $(eval $(call noargs, try ))
 $(GOAL): ssh_hostargs
 ifdef I
-	ssh -t $(DEV_SSH_ARGS) $(INVOPTS) sailfish-qml test-md
+	ssh -t $D $(INVOPTS) sailfish-qml test-md
 else
-	ssh -t $(DEV_SSH_ARGS) sailfish-qml test-md
+	ssh -t $D sailfish-qml test-md
 endif
 INVOPTS = invoker -vv --single-instance --type=silica-qt5
+
+# make 1-day persistent ssh tunnel...
+$(eval $(call noargs, ssht ))
+$(GOAL):
+ifndef D
+	$(error give D='ssh dest' as make option (e.g. ','))
+endif
+ifndef R
+	$(error give R='[user@]host [other opts]' as make option)
+endif
+	$(info Checking/creating persistent connection for '$D')
+	@set -x; z=`ssh -O check "$D" 2>&1` && \
+	{ : ssh $D -O exit to exit if so desired; exit; \
+	} || case $$z in 'Control socket connect'*) ;; *) \
+		printf '%s\n(in ~/.ssh/config)\n' "$${z%?}"; \
+		exit 1; \
+	     esac; \
+	z=$${z%)*}; z=$${z#*\(}; \
+	test -e "$$z" && rm "$$z"; \
+	ssh -oControlPath=$$z -M -oControlPersist=1d "$R" date; date
 
 
 # rpmbuild using podman / sailfishos-platform-sdk-aarch64 (or -armv7hl)
