@@ -7,7 +7,7 @@
 #	    All rights reserved
 #
 # Created: Tue 17 Jan 2023 23:58:46 EET too
-# Last modified: Sun 10 Aug 2025 12:45:52 +0300 too
+# Last modified: Sun 10 Aug 2025 21:13:12 +0300 too
 
 # one may be able to give command line input that breaks this,
 # but if it is a footgun, it is their footgun...
@@ -34,12 +34,14 @@ endif
 MMCG += $(1)
 .PHONY: $(1)
 GOAL := $(1)
+$(1): GOAL = $(strip $(1))
 endef
 
 define noargs =
 MMCG += $(1)
 .PHONY: $(1)
 GOAL := $(1)
+$(1): GOAL = $(strip $(1))
 endef
 
 # this help
@@ -67,17 +69,17 @@ x_exec () { printf '+ %s\n' "$$*" >&2; exec "$$@"; }
 endef
 
 
-$(eval $(call haveargs, ssh_hostargs ))
-$(GOAL):
+.PHONY: _ssh_hostargs
 ifdef D
-	@/bin/true
+_ssh_hostargs: ;
 else
+_ssh_hostargs:
 	@$(info )
-	$(info The Command '$(MAKECMDGOALS)' requires ssh access to the device.)
-	$(info Set 'D=rhost', either in environment, or as a make variable.)
-	$(info Note: Multiple ssh commands may be run, some with -t included.)
+	$(info The Command '$(GOAL)' requires ssh access to the device.)
+	$(info Set 'D=rhost' - either in environment or as a make variable.)
 	$(info (Often just hostname is enough, but one may need more.))
-	$(info FYI: make ssht D= R=defaultuser@device may be useful ...)
+	$(info Note: Multiple ssh commands may be run, some with -t included.)
+	$(info FYI: make ssht D=, R=defaultuser@device may be useful ...)
 	$(info )
 	$(error )
 endif
@@ -87,7 +89,7 @@ TD = /usr/share/test-md
 
 # create /usr/share/test-md/{,qml,etc} over ssh (devel-su)
 $(eval $(call noargs, rdirs ))
-$(GOAL): ssh_hostargs
+$(GOAL): _ssh_hostargs
 	@$(shlead)
 	x ssh -t $D "test -d $(TD) || { set -x;
 	devel-su sh -c \"mkdir -p $(TD)/etc; chown \$$LOGNAME $(TD)\"; }"
@@ -137,7 +139,7 @@ $(mkd)/%.so: %.c
 
 # copy material over ssh, to /usr/share/test-md/{,qml}
 $(eval $(call noargs, rcopy ))
-$(GOAL): ssh_hostargs $(ST)
+$(GOAL): _ssh_hostargs $(ST)
 	@echo Do ln -s mad-developer.qml .../qml/test-md.qml manually.
 	echo Also, scp ssh_host_ed25519_key and then move it in place manually.
 
@@ -152,13 +154,13 @@ $(GOAL): $(mkd)/inetsshd $(mkd)/ldpreload-sshdivert.so $(mkd)/exitsshconns
 
 # devel-su rm -rf /usr/share/test-md/ over ssh connection
 $(eval $(call noargs, rrm ))
-$(GOAL): ssh_hostargs
+$(GOAL): _ssh_hostargs
 	ssh $D 'set -x; devel-su rm -rf /usr/share/test-md'
 
 
 # test run on device: append I={anything} to run via invoker
 $(eval $(call noargs, try ))
-$(GOAL): ssh_hostargs
+$(GOAL): _ssh_hostargs
 ifdef I
 	ssh -t $D $(INVOPTS) sailfish-qml test-md
 else
